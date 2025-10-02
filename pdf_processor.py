@@ -45,7 +45,7 @@ class PDFProcessor:
                     print(f"  - Applying Redaction #{i+1} at Rect: (x0={rect.x0:.2f}, y0={rect.y0:.2f}, x1={rect.x1:.2f}, y1={rect.y1:.2f})")
 
                     # Add the redaction annotation (the "sticker")
-                    page.add_redact_annot(rect, fill=(0, 0, 0))
+                    page.add_redact_annot(rect, fill=(0, 0, 0))  # Black fill for redaction
                 
                 # Apply the redactions for THIS PAGE specifically.
                 # The images=2 argument explicitly tells it to black out image content under the rect.

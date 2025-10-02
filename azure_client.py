@@ -144,7 +144,6 @@ class AzureAIClient:
         user_prompt = f"Organization Name: \"{organization_name}\"\nContext Sentence: \"{context_sentence}\""
         
         try:
-            # Note: For a task this simple, you could potentially use a much smaller, cheaper model deployment.
             response = self.openai_client.chat.completions.create(
                 model=self.openai_fast_deployment,
                 messages=[

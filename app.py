@@ -2,7 +2,7 @@ import streamlit as st
 import fitz  # PyMuPDF
 import os
 from collections import defaultdict
-from PIL import ImageDraw
+from PIL import ImageDraw, Image
 from streamlit_drawable_canvas import st_canvas
 from redaction_logic import analyse_document_for_redactions
 from pdf_processor import PDFProcessor
@@ -262,8 +262,12 @@ def main():
                 # Create the resized image that will be displayed
                 display_image = original_image.resize((CANVAS_DISPLAY_WIDTH, display_height))
                 
-                # Draw existing redactions onto this display image
-                draw = ImageDraw.Draw(display_image)
+                # Create a transparent layer for drawing redactions
+                transparent_layer = Image.new("RGBA", display_image.size, (0, 0, 0, 0))
+                draw = ImageDraw.Draw(transparent_layer)
+
+                # Define redaction colour and opacity
+                redaction_fill = (255, 255, 0, 102)  # Semi-transparent yellow
 
                 # Draw approved AI suggestions, scaled to the display size
                 approved_ai_suggestions = [
@@ -277,21 +281,17 @@ def main():
                             rect.x0 * dpi_to_display_scaling, rect.y0 * dpi_to_display_scaling,
                             rect.x1 * dpi_to_display_scaling, rect.y1 * dpi_to_display_scaling
                         )
-                        draw.rectangle(scaled_rect, fill="black")
+                        draw.rectangle(scaled_rect, fill=redaction_fill)
 
-                # Pre-draw existing manual redactions onto the background
-                for obj in st.session_state.manual_rects.get(page_index, []):
-                    # Manual rects are stored relative to the canvas, so we need to scale them for display
-                    x1, y1 = obj["left"], obj["top"]
-                    x2, y2 = x1 + obj["width"], y1 + obj["height"]
-                    draw.rectangle((x1, y1, x2, y2), fill="black")
+                # Composite the AI suggestions onto the background
+                final_bg_image = Image.alpha_composite(display_image.convert("RGBA"), transparent_layer)
                 
                 st.info("In 'Draw' mode, create new redactions. In 'Edit/Delete' mode, you can move, resize, or double-click to delete shapes.")
                 
                 canvas_result = st_canvas(
-                    fill_color="rgba(0, 0, 0, 1.0)",
+                    fill_color="rgba(255, 255, 0, 0.4)",
                     stroke_width=0,
-                    background_image=display_image,
+                    background_image=final_bg_image,
                     update_streamlit=True,
                     height=display_height,
                     width=CANVAS_DISPLAY_WIDTH,
@@ -331,7 +331,8 @@ def main():
                             x1 * final_scaling_factor, y1 * final_scaling_factor,
                             x2 * final_scaling_factor, y2 * final_scaling_factor
                         )
-                        approved_areas_by_page[page_num].append(pdf_rect)
+                        approved_areas_by_page[page_num].append(pdf_rect
+                        )
                 
                 if not approved_areas_by_page:
                     st.warning("No redactions were selected or drawn.")
