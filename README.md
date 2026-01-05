@@ -140,7 +140,7 @@ The application requires credentials for three separate Azure services.
 2. Run the Streamlit application:
 
    ```bash
-   streamlit run app.py
+   streamlit run src/redactor/app.py
    ```
 3. Open your web browser to the local URL provided by Streamlit (usually `http://localhost:8501`).
 
